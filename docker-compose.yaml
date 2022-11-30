@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  newsletter:
+    container_name: newsletter
+    build:
+      context: src/newsletter/.
+    ports:
+    - "5001:5000"
+    links:
+    - mongo
+  product:
+    container_name: product
+    build: 
+      context: src/product/.
+    ports:
+    - "5002:5000"
+    links:
+    - mongo
+  shopping-cart:
+    container_name: shopping-cart
+    build: 
+      context: src/shopping-cart/.
+    ports:
+    - "5003:5000"
+    links:
+    - mongo
+  user:
+    container_name: user
+    build:
+      context: src/user/.
+    ports:
+    - "5004:5000"
+    links:
+    - mongo
+  mongo:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=root-db
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=pass
+    volumes:
+      - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
+    ports:
+      - 27017:27017
