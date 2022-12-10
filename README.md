@@ -6,6 +6,7 @@ Microservices:
 - Product service: Information and management for different products
 - Shopping cart service: Functionality to order items
 - Newsletter service: Sends emails about latest offers to the clients
+- Users service: Manage customers + admin users
 
 # Requirements
 - Python 3.8.x
