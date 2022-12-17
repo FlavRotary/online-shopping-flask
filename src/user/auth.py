@@ -1,15 +1,26 @@
-from flask import Blueprint
+import jwt
+from flask import jsonify, current_app
+from flask_restful import Resource, reqparse
+import hashlib
+from mongo import mongo
 
-auth = Blueprint('auth', __name__)
+parser = reqparse.RequestParser()
+parser.add_argument('email')
+parser.add_argument('password', type=str, required=True)
 
-@auth.route('/login')
-def login() :
-        return "<p>Login</p>"
+class Login(Resource):
+    def post(self):
+        params = parser.parse_args()
 
-@auth.route('/logout')
-def logout() :
-        return "<p>Logout</p>"
+        user = mongo.users.find_one({
+            'email': params['email'],
+            'password': hashlib.sha256(params['password'].encode('utf-8')).hexdigest()
+        })
 
-@auth.route('/sign-up')
-def sign_up() :
-        return "<p>Sign-up</p>"
+        jwt_token = jwt.encode({'sub': user['email']}, current_app.config['JWT_SECRET'], algorithm='HS256')
+
+        return jsonify({
+            'result': {
+                'token': jwt_token.decode('utf-8')
+            }
+        })
