@@ -1,28 +1,28 @@
-db = db.getSiblingDB("users");
+db = db.getSiblingDB('shopping_db');
 
-db.users.drop();
+db.shopping_db.drop();
+
+db.createCollection('users');
+
+db.createCollection('products');
 
 db.users.insertMany([
-    {
-        "id": 1,
-        "name": "user1",
-        "email": "user1@example.com"
-    },
-    {
-        "id": 2,
-        "name": "user2",
-        "email": "user2@example.com"
-    },
-    {
-        "id": 3,
-        "name": "user3",
-        "email": "user3@example.com"
-    },
+  {
+      "id": 1,
+      "name": "user1",
+      "email": "user1@example.com",
+  },
+  {
+      "id": 2,
+      "name": "user2",
+      "email": "user2@example.com",
+  },
+  {
+      "id": 3,
+      "name": "user3",
+      "email": "user3@example.com",
+  },
 ]);
-
-db = db.getSiblingDB("products");
-
-db.products.drop();
 
 db.products.insertMany([
     {
@@ -41,3 +41,14 @@ db.products.insertMany([
         "price": 300
     },
 ]);
+
+db.createUser({
+  user: 'shopping_admin',
+  pwd: 'password',
+  roles: [
+      {
+          role: 'dbOwner',
+          db: 'shopping_db',
+      },
+  ],
+});
