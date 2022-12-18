@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.11.1-slim
 
 RUN apt-get clean \
     && apt-get -y update && apt-get -y install \
