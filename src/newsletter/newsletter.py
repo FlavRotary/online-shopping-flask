@@ -1,20 +1,47 @@
 from flask import Flask, jsonify
 from flask_pymongo import MongoClient
+from flask_mail import Mail, Message
+from os import path
+from configparser import ConfigParser
+
+
+from mongo import mongo
 
 app = Flask(__name__)
 
-def get_db():
-    client = MongoClient(host='test_mongodb',
-                         port=27017, 
-                         username='root', 
-                         password='pass',
-                        authSource="admin")
-    db = client["users"]
-    return db
+config = ConfigParser()
+config.read([
+    path.abspath('config.ini'),
+    path.abspath('sample_config.ini')
+])
+
+default_config = config['DEFAULT']
+# app.config['MONGO_URI'] = default_config['DB_URI']
+# app.config['MAIL_SERVER'] = default_config['MAIL_SERVER']
+# app.config['MAIL_PORT'] = default_config['MAIL_PORT']
+# app.config['MAIL_USERNAME'] = default_config['MAIL_USERNAME']
+# app.config['MAIL_PASSWORD'] = default_config['MAIL_PASSWORD']
+# app.config['MAIL_DEFAULT_SENDER'] = default_config['MAIL_DEFAULT_SENDER']
+# app.config['MAIL_USE_TLS'] = default_config['MAIL_USE_TLS']
+# app.config['MAIL_USER_SSL'] = default_config['MAIL_USER_SSL']
+app.config.update(default_config)
+mail = Mail(app)
 
 @app.route("/")
-def hello_world():
-    return "<p>Hello from newsletter!</p>"
+def index():
+    sent = []
+    products = mongo.products.find()
+    for email in mongo.users.distinct('email'):
+        msg = Message('Hello from Online-Shopping', sender = app.config['MAIL_DEFAULT_SENDER'], recipients = [email])
+        msg.body = "Hi! Here is a list of all the products we currently have on stock.\n"
+        for product in products:
+            msg.body += "- " + product['name'] + "\n  " + product['price'] + '\n'
+        msg.body += "\nSee you online!"
+        mail.send(msg)
+        sent.append(email)
+    
+    return jsonify({'result': sent})
+    
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
