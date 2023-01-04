@@ -2,6 +2,7 @@ from flask import jsonify, g
 from flask_restful import Resource, reqparse
 
 from mongo import mongo
+from decorators import authenticate
 
 test_email = "user1@example.com"
 
@@ -10,12 +11,12 @@ parser.add_argument('product_id', type=int, required=True)
 parser.add_argument('quantity', type = int, required=False)
 
 class AddToCart(Resource):
-    # method_decorators = [authenticate]
+    method_decorators = [authenticate]
     
     def post(self):
         
         params = parser.parse_args()
-        email = test_email
+        email = g.logged_in_user
         quantity = params['quantity'] if params['quantity'] else 0
         
         query = {'email': email}

@@ -22,6 +22,7 @@ config.read([
 
 default_config = config['DEFAULT']
 app.config['MONGO_URI'] = default_config['DB_URI']
+app.config['JWT_SECRET'] = default_config['JWT_SECRET']
 
 
 api.add_resource(Contents, '/api/contents')

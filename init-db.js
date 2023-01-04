@@ -11,6 +11,7 @@ db.users.insertMany([
       "id": 1,
       "name": "user1",
       "email": "user1@example.com",
+      "password": "0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90",
       "cart_items": [
         { 
           "id": 1,
@@ -32,6 +33,7 @@ db.users.insertMany([
       "id": 2,
       "name": "user2",
       "email": "user2@example.com",
+      "password": "6025d18fe48abd45168528f18a82e265dd98d421a7084aa09f61b341703901a3",
       "cart_items": [
         {
           "id": 2,
@@ -53,6 +55,7 @@ db.users.insertMany([
       "id": 3,
       "name": "user3",
       "email": "user3@example.com",
+      "password": "5860faf02b6bc6222ba5aca523560f0e364ccd8b67bee486fe8bf7c01d492ccb",
       "cart_items": [
         { 
           "id": 1,

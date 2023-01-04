@@ -3,15 +3,17 @@ from flask_restful import Resource, reqparse
 
 from mongo import mongo
 
+from decorators import authenticate
+
 test_email = "user1@example.com"
 
 
 class Checkout(Resource):
-    # method_decorators = [authenticate]
+    method_decorators = [authenticate]
     
     def post(self):
         
-        email = test_email
+        email = g.logged_in_user
         
         current_order_number = len(mongo.users.find_one({'email': email})['past_orders']) + 1
         

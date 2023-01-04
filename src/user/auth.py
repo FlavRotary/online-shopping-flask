@@ -17,10 +17,10 @@ class Login(Resource):
             'password': hashlib.sha256(params['password'].encode('utf-8')).hexdigest()
         })
 
-        jwt_token = jwt.encode({'sub': user['email']}, current_app.config['JWT_SECRET'], algorithm='HS256')
+        jwt_token = jwt.encode({'sub': params['email']}, current_app.config['JWT_SECRET'], algorithm='HS256')
 
         return jsonify({
             'result': {
-                'token': jwt_token.decode('utf-8')
+                'token': jwt_token
             }
         })
