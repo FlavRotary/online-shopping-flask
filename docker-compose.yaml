@@ -33,13 +33,15 @@ services:
     links:
     - mongo
   mongo:
-    image: mongo:latest
+    image: mongo:5.0
     container_name: mongodb
     environment:
-      - MONGO_INITDB_DATABASE=root-db
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=pass
+      - MONGO_INITDB_ROOT_USERNAME = ${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD = ${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE = shopping_db
     volumes:
       - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
     ports:
       - 27017:27017
+volumes:
+  mongo_data:

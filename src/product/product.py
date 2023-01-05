@@ -1,8 +1,18 @@
+from configparser import ConfigParser
+from os import path
 from flask import Flask, jsonify
-import pymongo
-from pymongo import MongoClient
+from flask_pymongo import MongoClient
 
 app = Flask(__name__)
+
+config = ConfigParser()
+config.read([
+    path.abspath('config.ini'),
+    path.abspath('sample_config.ini')
+])
+
+default_config = config['DEFAULT']
+app.config.update(default_config)
 
 def get_db():
     client = MongoClient(host='test_mongodb',
