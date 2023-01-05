@@ -13,12 +13,16 @@ jobs:
         include:
           - dockerfile: ./src/newsletter/Dockerfile
             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-newsletter
+            name: online-shopping-newsletter
           - dockerfile: ./src/product/Dockerfile
             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-product
+            name: online-shopping-product
           - dockerfile: ./src/shopping-cart/Dockerfile
             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-cart
+            name: online-shopping-cart
           - dockerfile: ./src/user/Dockerfile
             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-user
+            name: online-shopping-user
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -47,6 +51,6 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ matrix.image }}:latest
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{ matrix.name }}:latest
           labels: ${{ steps.meta.outputs.labels }}
       
