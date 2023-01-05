@@ -47,6 +47,6 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: latest
+          tags: ${{ matrix.image }}:latest
           labels: ${{ steps.meta.outputs.labels }}
       
