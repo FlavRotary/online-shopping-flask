@@ -11,7 +11,7 @@ env:
   DEPLOYMENT_NAME: online-shopping-flask
 
 jobs:
-  build-push-fetch-deploy:
+  build-and-push:
     name: Build and push docker images
     runs-on: ubuntu-latest
     strategy:
@@ -60,16 +60,31 @@ jobs:
           push: true
           tags: ${{secrets.DOCKERHUB_USERNAME}}/${{ matrix.name }}:latest
           labels: ${{ steps.meta.outputs.labels }}
-      
+
+  fetch-and-deploy:
+    name: Fetch Images and deploy to GKE
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [build-and-push]
+    steps:
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
       - name: Setup Google Cloud CLI
         uses: google-github-actions/auth@v1
         with:
-          service_account_key: ${{secrets.GKE_SA_KEY}}
-          project_id: ${{secrets.GKE_PROJECT}}
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
       - name: Get Google Cloud GKE Creds
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: $GKE_CLUSTER
           location: $GKE_ZONE
+
       - id: get-pods
         run: 'kubectl get pods -A'
+
