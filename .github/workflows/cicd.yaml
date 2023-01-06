@@ -4,12 +4,6 @@ on:
     branches:
       - 'main'
 
-env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: cloud-project-frotaru-tprion
-  GKE_ZONE: europe-central2
-  DEPLOYMENT_NAME: online-shopping-flask
-
 jobs:
 #   build-and-push:
 #     name: Build and push docker images
@@ -69,6 +63,11 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
+    env:
+      PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+      GKE_CLUSTER: cloud-project-frotaru-tprion
+      GKE_ZONE: europe-central2
+      DEPLOYMENT_NAME: online-shopping-flask
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -88,8 +87,8 @@ jobs:
       - name: Get Google Cloud GKE Creds
         uses: google-github-actions/get-gke-credentials@v1
         with:
-          cluster_name: $GKE_CLUSTER
-          location: $GKE_ZONE
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
 
       - id: get-pods
         run: 'kubectl get pods -A'
