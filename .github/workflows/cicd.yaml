@@ -3,8 +3,15 @@ on:
   push:
     branches:
       - 'main'
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: cloud-project-frotaru-tprion
+  GKE_ZONE: europe-central2
+  DEPLOYMENT_NAME: online-shopping-flask
+
 jobs:
-  build-and-push:
+  build-push-fetch-deploy:
     name: Build and push docker images
     runs-on: ubuntu-latest
     strategy:
@@ -54,3 +61,15 @@ jobs:
           tags: ${{secrets.DOCKERHUB_USERNAME}}/${{ matrix.name }}:latest
           labels: ${{ steps.meta.outputs.labels }}
       
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          service_account_key: ${{secrets.GKE_SA_KEY}}
+          project_id: ${{secrets.GKE_PROJECT}}
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: $GKE_CLUSTER
+          location: $GKE_ZONE
+      - id: get-pods
+        run: 'kubectl get pods -A'
