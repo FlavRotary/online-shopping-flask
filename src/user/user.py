@@ -4,7 +4,7 @@ from flask import Flask, jsonify, current_app, g
 from flask_restful import Api
 from flask_pymongo import MongoClient
 
-from auth import Login
+from Auth import Login
 from CreateUser import UsersList
 from UserData import ReturnUser
 
