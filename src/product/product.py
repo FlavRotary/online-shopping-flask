@@ -21,8 +21,8 @@ app.config['JWT_SECRET'] = default_config['JWT_SECRET']
 
 api = Api(app)
 
-api.add_resource(AddProduct, 'api/products/add_product')
-api.add_resource(ReturnProduct, 'api/products/<string:uuid>')
+api.add_resource(AddProduct, '/api/products/add_product')
+api.add_resource(ReturnProduct, '/api/products/<string:uuid>')
 
 
 if __name__ == '__main__':

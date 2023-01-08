@@ -12,7 +12,7 @@ parser.add_argument('price', type = float, required = True)
 parser.add_argument('description', type = str, required = False)
 parser.add_argument('stockLeft', type = int, required = True)
 
-class AddProduct():
+class AddProduct(Resource):
     def post(self):
         params = parser.parse_args()
 
@@ -29,6 +29,4 @@ class AddProduct():
 
         mongo.products.insert_one(doc)
 
-        doc.pop('_id', None)
-        #doc.pop('password', None)
         return jsonify({'result': doc})
