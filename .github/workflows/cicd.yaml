@@ -47,8 +47,8 @@ jobs:
     needs: check-modified-folders
     runs-on: ubuntu-latest
     if: |
-      check-modified-folders.steps.changed-newsletter.outputs.any_changed == 'true' || 
-      contains(check-modified-folders.steps.changed-files.outputs.any_changed, 'newsletter')
+      needs.check-modified-folders.steps.changed-newsletter.outputs.any_changed == 'true' || 
+      contains(needs.check-modified-folders.steps.changed-files.outputs.any_changed, 'newsletter')
     steps:
       - name: Echo newsletter
         run: echo "newsletter"
