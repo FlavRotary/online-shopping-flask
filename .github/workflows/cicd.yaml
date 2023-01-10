@@ -24,7 +24,7 @@ jobs:
       - name: Echo
         run: echo ${{ steps.get_changed.outputs.changed }}
       - name: if newsletter
-        if: contains(${{ steps.get_changed.outputs.changed }}, 'newsletter')
+        if: contains(steps.get_changed.outputs.changed, 'newsletter')
         run: echo "newsletter"
 
 
