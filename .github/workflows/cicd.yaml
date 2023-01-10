@@ -33,7 +33,7 @@ jobs:
       - name: Evaluate changed files
         id: evaluate-files
         run: |
-          output="${{steps.changed-files.outputs.all_changed_files}}"
+          output=$(echo ${{steps.changed-files.outputs.all_changed_files}} | sed 's/.//')
           if [[$output =~ *"src/newsletter"* || $output =~ *"kube/app/newsletter"*]]; then
             echo "NEWSLETTER=true" >> $GITHUB_OUTPUT
           else
