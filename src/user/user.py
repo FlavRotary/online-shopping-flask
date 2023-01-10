@@ -33,4 +33,4 @@ api.add_resource(UsersList, '/api/users/')
 api.add_resource(ReturnUser, '/api/users/<string:uuid>')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)

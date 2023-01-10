@@ -16,4 +16,4 @@ ADD . .
 ENV FLASK_APP=/app/product.py
 ENV FLASK_ENV=development
 EXPOSE 5000
-ENTRYPOINT ["python3", "-m" , "flask", "run", "--host=0.0.0.0", "--reload"]
+ENTRYPOINT ["python3", "-m" , "flask", "run"]

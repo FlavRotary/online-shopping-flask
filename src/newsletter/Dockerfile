@@ -16,5 +16,5 @@ COPY . /app
 ENV FLASK_APP=/app/newsletter.py
 ENV FLASK_ENV=development
 EXPOSE 5000
-CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--reload"]
+CMD ["python3", "-m", "flask", "run"]
 #CMD [ "python3", "/app/newsletter.py" ]
