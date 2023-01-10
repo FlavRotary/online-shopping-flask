@@ -41,7 +41,7 @@ def index():
         msg.body = "Hi! Here is a list of all the products we currently have on stock.\n"
         for product in products:
             msg.body += "- " + product['name'] + "\n  " + str(product['price']) + '\n'
-        msg.body += "\nSee you online!!"
+        msg.body += "\nSee you online!!!"
         mail.send(msg)
         sent.append(email)
     
