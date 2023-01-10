@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 from os import path
+import os
 from flask import Flask, jsonify
 from flask_pymongo import MongoClient
 from flask_restful import Api
@@ -15,8 +16,12 @@ config.read([
     path.abspath('sample_config.ini')
 ])
 
+username = os.environ['MONGO_INITDB_ROOT_USERNAME']
+password = os.environ['MONGO_INITDB_ROOT_PASSWORD']
+db_name = os.environ['MONGO_INITDB_DATABASE']
+
 default_config = config['DEFAULT']
-app.config['MONGO_URI'] = default_config['DB_URI']
+app.config['MONGO_URI'] =  'mongodb://' + username + ':' + password + '@mongo/' + db_name
 app.config['JWT_SECRET'] = default_config['JWT_SECRET']
 
 api = Api(app)
