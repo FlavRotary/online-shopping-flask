@@ -13,18 +13,19 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - uses: Stockopedia/action-get-changed-files@v1
-        id: get_changed
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          ignore: "{kube,.github}/**"
-          foldersOnly: true
-          format: csv
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v35
 
-      - name: Echo
-        run: echo ${{ steps.get_changed.outputs.changed }}
+      - name: Get changed files in the docs folder
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            src/newsletter/**
+
       - name: if newsletter
-        if: contains(steps.get_changed.outputs.changed, 'newsletter')
+        if: steps.changed-files-specific.outputs.any_changed == 'true'
         run: echo "newsletter"
 
 
