@@ -130,7 +130,7 @@ jobs:
         run: 'kubectl delete cronjob newsletter --namespace $NAMESPACE'
 
       - name: Apply new deployment file
-        continue-on-error: true
+        if: always()
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
 
   push-deploy-product:
@@ -192,7 +192,6 @@ jobs:
           location: ${{env.GKE_ZONE}}
 
       - name: Apply new deployment file
-        continue-on-error: true
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
 
   push-deploy-shopping-cart:
@@ -254,7 +253,6 @@ jobs:
           location: ${{env.GKE_ZONE}}
 
       - name: Apply new deployment file
-        continue-on-error: true
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
 
   push-deploy-user:
@@ -316,7 +314,6 @@ jobs:
           location: ${{env.GKE_ZONE}}
 
       - name: Apply new deployment file
-        continue-on-error: true
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
 
   push-deploy-mongo:
@@ -360,7 +357,6 @@ jobs:
           location: ${{env.GKE_ZONE}}
 
       - name: Apply new deployment file
-        continue-on-error: true
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
 
 
