@@ -1,15 +1,17 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
  name: mongo
 spec:
+ selector:
+  matchLabels:
+    app: mongo
  serviceName: "mongo"
- replicas: 3
+ replicas: 1
  template:
    metadata:
      labels:
-       role: mongo
-       environment: test
+       app: mongo
    spec:
      terminationGracePeriodSeconds: 10
      containers:
@@ -39,11 +41,6 @@ spec:
                   key: passwords
             - name: MONGO_INITDB_DATABASE
               value: shopping_db
-       - name: mongo-sidecar
-         image: cvallance/mongo-k8s-sidecar
-         env:
-           - name: MONGO_SIDECAR_POD_LABELS
-             value: "role=mongo,environment=test"
  volumeClaimTemplates:
  - metadata:
      name: mongo-persistent-storage
