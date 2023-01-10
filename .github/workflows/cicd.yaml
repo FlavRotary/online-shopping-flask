@@ -90,6 +90,6 @@ jobs:
           cluster_name: ${{env.GKE_CLUSTER}}
           location: ${{env.GKE_ZONE}}
 
-      - id: get-pods
-        run: 'kubectl get pods -A'
+      - name: Apply kustomization
+        run: 'kubectl apply -k /kube/.'
 

@@ -1,0 +1,16 @@
+# https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  namespace: cloudcomputing-app
+spec:
+  GKE: standard
+  storageClassName: default
+  accessModes:
+  - ReadWriteOnce
+  volumeName: pv
+  resources:
+    requests:
+      storage: 1Gi
+---
