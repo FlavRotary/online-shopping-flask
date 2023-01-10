@@ -24,7 +24,7 @@ spec:
       containers:
       - name:  cart
         image:  flavrotary/online-shopping-cart:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         resources:
           requests:
             cpu: 100m
