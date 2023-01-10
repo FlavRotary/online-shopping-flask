@@ -14,7 +14,5 @@ RUN pip install -r requirements.txt --src /usr/local/src
 COPY /src/newsletter .
 
 ENV FLASK_APP=/app/newsletter.py
-ENV FLASK_ENV=development
 EXPOSE 5000
-CMD ["python3", "-m", "flask", "run"]
-#CMD [ "python3", "/app/newsletter.py" ]
+ENTRYPOINT ["python3", "-m" , "flask", "run"]

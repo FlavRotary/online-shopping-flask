@@ -123,7 +123,7 @@ jobs:
         run: 'kubectl delete cronjob newsletter --namespace $NAMESPACE'
 
       - name: Apply new deployment file
-        if: always()
+        continue-on-error: true
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
 
 
