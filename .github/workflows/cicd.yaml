@@ -100,7 +100,7 @@ jobs:
           context: .
           file: $DOCKERFILE
           push: true
-          tags: ${{secrets.DOCKERHUB_USERNAME}}/$NAME:latest
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
           labels: ${{ steps.meta.outputs.labels }}
       
       - name: Setup Google Cloud CLI
