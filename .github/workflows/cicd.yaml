@@ -9,10 +9,10 @@ jobs:
     name: Check for modified folders
     runs-on: ubuntu-latest
     outputs:
-      newsletter: ${{steps.evaluate-files.outputs.newsletter}}
-      product: ${{steps.evaluate-files.outputs.product}}
-      shopping-cart: ${{steps.evaluate-files.outputs.shoppint-cart}}
-      user: ${{steps.evaluate-files.outputs.user}}
+      newsletter: ${{steps.evaluate-files.outputs.NEWSLETTER}}
+      product: ${{steps.evaluate-files.outputs.PRODUCT}}
+      shopping-cart: ${{steps.evaluate-files.outputs.CART}}
+      user: ${{steps.evaluate-files.outputs.USER}}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -34,29 +34,30 @@ jobs:
         id: evaluate-files
         run: |
           if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/newsletter"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/newsletter"*]]; then
-            echo "::set-output name=newsletter::true"
+            echo "NEWSLETTER=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=newsletter::false"
+            echo "NEWSLETTER=false" >> $GITHUB_OUTPUT
           fi
           if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/product"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/product"*]]; then
-            echo "::set-output name=product::true"
+            echo "PRODUCT=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=product::false"
+            echo "PRODUCT=false" >> $GITHUB_OUTPUT
           fi
           if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/shopping-cart"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/shopping-cart"*]]; then
-            echo "::set-output name=shopping-cart::true"
+            echo "CART=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=shopping-cart::false"
+            echo "CART=false" >> $GITHUB_OUTPUT
           fi
           if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/user"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/user"*]]; then
-            echo "::set-output name=user::true"
+            echo "USER=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=user::false"
+            echo "USER=false" >> $GITHUB_OUTPUT
           fi
 
   push-deploy-newsletter:
     name: "Push and deploy newsletter to kubernetes cluster"
     runs-on: ubuntu-latest
+    needs: [check-modified-folders]
     if: needs.check-modified-folders.outputs.newsletter == 'true'
     steps:
       - name: Checkout source code
