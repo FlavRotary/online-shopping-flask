@@ -92,13 +92,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: $IMAGE
+          images: ${{env.IMAGE}}
 
       - name: Build and push Docker Images
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: $DOCKERFILE
+          file: ${{env.DOCKERFILE}}
           push: true
           tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
           labels: ${{ steps.meta.outputs.labels }}
