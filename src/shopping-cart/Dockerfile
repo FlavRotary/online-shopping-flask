@@ -14,6 +14,5 @@ RUN pip install -r requirements.txt --src /usr/local/src
 COPY src/shopping-cart .
 
 ENV FLASK_APP=/app/shopping-cart.py
-ENV FLASK_ENV=development
 EXPOSE 5000
 ENTRYPOINT ["python3", "-m" , "flask", "run"]

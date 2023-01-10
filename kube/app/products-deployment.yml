@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name:  products
-        image:  flavrotary/online-shopping-products:latest
+        image:  flavrotary/online-shopping-product:latest
         imagePullPolicy: Always
         resources:
           requests:
