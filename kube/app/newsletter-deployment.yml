@@ -12,7 +12,7 @@ spec:
         spec:
           containers:
           - name: newsletter
-            image: flavrotary/online-shopping-products:latest
+            image: flavrotary/online-shopping-newsletter:latest
             env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
