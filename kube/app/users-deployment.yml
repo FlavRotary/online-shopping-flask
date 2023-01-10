@@ -59,7 +59,7 @@ metadata:
 spec:
   selector:
     app: users-deployment
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - protocol: TCP
     port: 5004
