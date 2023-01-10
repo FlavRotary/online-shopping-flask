@@ -9,38 +9,14 @@ jobs:
     name: Check for modified folders
     runs-on: ubuntu-latest
     outputs:
-      newsletter: ${{steps.changed-newsletter.outputs.any_changed}}
-      product: ${{steps.changed-product.outputs.any_changed}}
-      shopping-cart: ${{steps.changed-shopping-cart.outputs.any_changed}}
-      users: ${{steps.changed-user.outputs.any_changed}}
+      newsletter: ${{steps.evaluate-files.outputs.newsletter}}
+      product: ${{steps.evaluate-files.outputs.product}}
+      shopping-cart: ${{steps.evaluate-files.outputs.shoppint-cart}}
+      user: ${{steps.evaluate-files.outputs.user}}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Get changed files in the newsletter folder
-        id: changed-newsletter
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            src/newsletter/**
-      - name: Get changed files in the product folder
-        id: changed-product
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            src/product/**
-      - name: Get changed files in the shopping-cart folder
-        id: changed-shopping-cart
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            src/shopping-cart/**
-      - name: Get changed files in the user folder
-        id: changed-user
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            src/user/**
       - name: Get all changed files and use a comma separator in the output
         id: changed-files
         uses: tj-actions/changed-files@v35
@@ -54,6 +30,30 @@ jobs:
             echo "$file was changed"
           done
 
+      - name: Evaluate changed files
+        id: evaluate-files
+        run: |
+          if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/newsletter"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/newsletter"*]]; then
+            echo "::set-output name=newsletter::true"
+          else
+            echo "::set-output name=newsletter::false"
+          fi
+          if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/product"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/product"*]]; then
+            echo "::set-output name=product::true"
+          else
+            echo "::set-output name=product::false"
+          fi
+          if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/shopping-cart"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/shopping-cart"*]]; then
+            echo "::set-output name=shopping-cart::true"
+          else
+            echo "::set-output name=shopping-cart::false"
+          fi
+          if [[${{steps.changed-files.outputs.all_changed_files}} == *"src/user"*] || [${{steps.changed-files.outputs.all_changed_files}} == *"kube/app/user"*]]; then
+            echo "::set-output name=user::true"
+          else
+            echo "::set-output name=user::false"
+          fi
+
   push-deploy-newsletter:
     name: "Push and deploy newsletter to kubernetes cluster"
     runs-on: ubuntu-latest
@@ -61,13 +61,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
-
-      - name: Get changed files in the newsletter folder
-        id: changed-newsletter
-        uses: tj-actions/changed-files@v35
-        with:
-          files: |
-            src/newsletter/**
 
       - name: Echo newsletter
         run: echo "newsletter"
