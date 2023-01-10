@@ -34,22 +34,22 @@ jobs:
         id: evaluate-files
         run: |
           output=$(echo ${{steps.changed-files.outputs.all_changed_files}} | sed 's/.//')
-          if [[$output =~ *"src/newsletter"*]]; then
+          if [[ $output == *"src/newsletter"* || $output == *"kube/app/newsletter"* ]]; then
             echo "NEWSLETTER=true" >> $GITHUB_OUTPUT
           else
             echo "NEWSLETTER=false" >> $GITHUB_OUTPUT
           fi
-          if [["$output" =~ *"src/product"*] || ["$output" =~ *"kube/app/product"*]]; then
+          if [[ "$output" == *"src/product"* || "$output" == *"kube/app/product"* ]]; then
             echo "PRODUCT=true" >> $GITHUB_OUTPUT
           else
             echo "PRODUCT=false" >> $GITHUB_OUTPUT
           fi
-          if [["$output" =~ *"src/shopping-cart"*] || ["$output" =~ *"kube/app/shopping-cart"*]]; then
+          if [[ "$output" == *"src/shopping-cart"* || "$output" == *"kube/app/shopping-cart"* ]]; then
             echo "CART=true" >> $GITHUB_OUTPUT
           else
             echo "CART=false" >> $GITHUB_OUTPUT
           fi
-          if [["$output" =~ *"src/user"*] || ["$output" =~ *"kube/app/user"*]]; then
+          if [[ "$output" == *"src/user"* || "$output" == *"kube/app/user"* ]]; then
             echo "USER=true" >> $GITHUB_OUTPUT
           else
             echo "USER=false" >> $GITHUB_OUTPUT
