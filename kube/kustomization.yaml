@@ -2,12 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - namespace.yml
-  - newsletter-deployment.yml
-  - products-deployment.yml
-  - shopping-cart-deployment.yml
-  - users-deployment.yml
+  - app/namespace.yml
+  - app/newsletter-deployment.yml
+  - app/products-deployment.yml
+  - app/shopping-cart-deployment.yml
+  - app/users-deployment.yml
   - mongodb/mongo-deployment.yaml
-  - mongodb/pv.yaml
-  - mongodb/pvc.yaml
+  - mongodb/storageclass.yaml
   - mongodb/secrets.yaml
