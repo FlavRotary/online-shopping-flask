@@ -5,28 +5,55 @@ on:
       - 'develop'
       
 jobs:
-
-  check-modified-src-folders:
-    name: Check for modified src folders
+  check-modified-folders:
+    name: Check for modified folders
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v35
-
-      - name: Get changed files in the docs folder
-        id: changed-files-specific
+      - name: Get changed files in the newsletter folder
+        id: changed-newsletter
         uses: tj-actions/changed-files@v35
         with:
           files: |
             src/newsletter/**
+      - name: Get changed files in the product folder
+        id: changed-product
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            src/product/**
+      - name: Get changed files in the shopping-cart folder
+        id: changed-shopping-cart
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            src/shopping-cart/**
+      - name: Get changed files in the user folder
+        id: changed-user
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            src/user/**
+      - name: Get all changed files and use a comma separator in the output
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          separator: ","
 
-      - name: if newsletter
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
+  push-deploy-newsletter:
+    name: "Push and deploy newsletter to kubernetes cluster"
+    needs: check-modified-folders
+    runs-on: ubuntu-latest
+    if: |
+      check-modified-folders.steps.changed-newsletter.outputs.any_changed == 'true' || 
+      contains(check-modified-folders.steps.changed-files.outputs.any_changed, 'newsletter')
+    steps:
+      - name: Echo newsletter
         run: echo "newsletter"
+
+
 
 
 
