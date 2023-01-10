@@ -19,6 +19,7 @@ jobs:
       product: ${{steps.evaluate-files.outputs.PRODUCT}}
       shopping-cart: ${{steps.evaluate-files.outputs.CART}}
       user: ${{steps.evaluate-files.outputs.USER}}
+      mongo: ${{steps.evaluate-files.outputs.MONGO}}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -60,6 +61,11 @@ jobs:
             echo "USER=true" >> $GITHUB_OUTPUT
           else
             echo "USER=false" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$output" == *"kube/mongodb"* ]]; then
+            echo "MONGO=true" >> $GITHUB_OUTPUT
+          else
+            echo "MONGO=false" >> $GITHUB_OUTPUT
           fi
 
   push-deploy-newsletter:
@@ -122,6 +128,236 @@ jobs:
 
       - name: Remove old cronjob
         run: 'kubectl delete cronjob newsletter --namespace $NAMESPACE'
+
+      - name: Apply new deployment file
+        continue-on-error: true
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-product:
+    name: "Push and deploy product to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.product == 'true'
+    env:
+      DOCKERFILE: ./src/product/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-product
+      NAME: online-shopping-product
+      DEPLOYMENT_FILE: ./kube/app/products-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Apply new deployment file
+        continue-on-error: true
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-shopping-cart:
+    name: "Push and deploy shopping-cart to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.shopping-cart == 'true'
+    env:
+      DOCKERFILE: ./src/shopping-cart/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-cart
+      NAME: online-shopping-cart
+      DEPLOYMENT_FILE: ./kube/app/shopping-cart-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Apply new deployment file
+        continue-on-error: true
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-user:
+    name: "Push and deploy user to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.user == 'true'
+    env:
+      DOCKERFILE: ./src/user/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-user
+      NAME: online-shopping-user
+      DEPLOYMENT_FILE: ./kube/app/users-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Apply new deployment file
+        continue-on-error: true
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-mongo:
+    name: "Push and deploy user to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.user == 'true'
+    env:
+      DEPLOYMENT_FILE: ./kube/mongodb/mongo-deployment.yaml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
 
       - name: Apply new deployment file
         continue-on-error: true
