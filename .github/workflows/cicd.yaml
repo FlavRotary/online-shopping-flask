@@ -71,6 +71,7 @@ jobs:
       IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-newsletter
       NAME: online-shopping-newsletter
       DEPLOYMENT_FILE: ./kube/app/newsletter-deployment.yml
+      NAMESPACE: cloudcomputing-app
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -117,6 +118,9 @@ jobs:
         with:
           cluster_name: ${{env.GKE_CLUSTER}}
           location: ${{env.GKE_ZONE}}
+
+      - name: Remove old cronjob
+        run: 'kubectl delete cronjob newsletter --namespace $NAMESPACE'
 
       - name: Apply new deployment file
         run: 'kubectl apply -f $DEPLOYMENT_FILE'
