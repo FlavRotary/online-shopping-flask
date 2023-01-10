@@ -91,5 +91,5 @@ jobs:
           location: ${{env.GKE_ZONE}}
 
       - name: Apply kustomization
-        run: 'kubectl apply -k /kube/.'
+        run: 'kubectl apply -k kube/.'
 
