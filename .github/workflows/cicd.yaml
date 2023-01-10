@@ -71,6 +71,9 @@ jobs:
       IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-newsletter
       NAME: online-shopping-newsletter
       DEPLOYMENT_FILE: ./kube/app/newsletter-deployment.yml
+    permissions:
+      contents: 'read'
+      id-token: 'write'
     steps:
     
       - name: Checkout source code
