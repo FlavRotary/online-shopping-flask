@@ -17,14 +17,14 @@ jobs:
         id: get_changed
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          ignore: "{kube,.github}/*"
+          ignore: "{kube,.github}/**"
           foldersOnly: true
           format: csv
 
       - name: Echo
         run: echo ${{ steps.get_changed.outputs.changed }}
       - name: if newsletter
-        if: contains(${{ steps.get_changed.outputs.changed }}, 'newsletter')
+        if: ${{contains(${{ steps.get_changed.outputs.changed }}, 'newsletter')}}
         run: echo "newsletter"
 
 
