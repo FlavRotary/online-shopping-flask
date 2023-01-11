@@ -9,10 +9,16 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          name: newsletter-job
+          labels: 
+            app: newsletter-job
         spec:
           containers:
           - name: newsletter
             image: flavrotary/online-shopping-newsletter:latest
+            command: ["/bin/sh"]
+            args: ["-c", "sleep 10; curl "]
             env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
@@ -28,3 +34,20 @@ spec:
               value: shopping_db
           restartPolicy: OnFailure
 ---
+# https://kubernetes.io/docs/concepts/services-networking/service/
+apiVersion: v1
+kind: Service
+metadata:
+  name: newsletter-service
+  namespace: cloudcomputing-app
+spec:
+  selector:
+    app: newsletter-job
+  type: ClusterIP
+  ports:
+  - name: myjob
+    protocol: TCP
+    port: 5001
+    targetPort: 5000
+---
+

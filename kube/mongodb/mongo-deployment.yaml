@@ -56,7 +56,7 @@ metadata:
  name: mongo-service
  namespace: cloudcomputing-app
  labels:
-   name: mongo
+   app: mongo
 spec:
  ports:
  - port: 27017
