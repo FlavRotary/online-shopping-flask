@@ -4,10 +4,8 @@ from werkzeug.exceptions import HTTPException
 class UnauthorizedException(HTTPException):
     pass
 
-
-class EmailAlreadyRegistered(HTTPException):
+class ProductAlreadyInDatabase(HTTPException):
     pass
 
-
-class InvalidUserEmailException(HTTPException):
+class ProductMissingFormDatabase(HTTPException):
     pass

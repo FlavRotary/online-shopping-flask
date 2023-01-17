@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify
 from flask_pymongo import MongoClient
 from flask_mail import Mail, Message
@@ -14,9 +15,12 @@ config.read([
     path.abspath('config.ini'),
     path.abspath('sample_config.ini')
 ])
+username = os.environ['MONGO_INITDB_ROOT_USERNAME']
+password = os.environ['MONGO_INITDB_ROOT_PASSWORD']
+db_name = os.environ['MONGO_INITDB_DATABASE']
 
 default_config = config['DEFAULT']
-app.config['MONGO_URI'] = default_config['DB_URI']
+app.config['MONGO_URI'] =  'mongodb://' + username + ':' + password + '@mongo/' + db_name
 app.config['MAIL_SERVER'] = default_config['MAIL_SERVER']
 app.config['MAIL_PORT'] = default_config['MAIL_PORT']
 app.config['MAIL_USERNAME'] = default_config['MAIL_USERNAME']
@@ -37,7 +41,7 @@ def index():
         msg.body = "Hi! Here is a list of all the products we currently have on stock.\n"
         for product in products:
             msg.body += "- " + product['name'] + "\n  " + str(product['price']) + '\n'
-        msg.body += "\nSee you online!"
+        msg.body += "\nSee you online!!"
         mail.send(msg)
         sent.append(email)
     
@@ -45,4 +49,4 @@ def index():
     
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)

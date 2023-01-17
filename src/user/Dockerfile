@@ -11,8 +11,8 @@ COPY requirements.txt /app/requirements.txt
 RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install -r requirements.txt --src /usr/local/src
 
-COPY . .
+COPY src/user/ .
 
-ENV FLASK_APP=user
+ENV FLASK_APP=/app/user.py
 EXPOSE 5000
-ENTRYPOINT ["python3", "-m" , "flask", "run", "--host=0.0.0.0", "--reload"]
+ENTRYPOINT ["python3", "-m" , "flask", "run"]

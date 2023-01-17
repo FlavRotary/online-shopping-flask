@@ -10,10 +10,10 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install -r requirements.txt --src /usr/local/src
+RUN pip install Flask-Mail
 
-COPY . /app
+COPY /src/newsletter .
 
 ENV FLASK_APP=/app/newsletter.py
 EXPOSE 5000
-CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--reload"]
-#CMD [ "python3", "/app/newsletter.py" ]
+ENTRYPOINT ["python3", "-m" , "flask", "run"]

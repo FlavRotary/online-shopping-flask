@@ -10,7 +10,7 @@ spec:
   selector:
     matchLabels:
       app: products-deployment
-  replicas: 3
+  replicas: 1
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -23,8 +23,8 @@ spec:
     spec:
       containers:
       - name:  products
-        image:  flavrotary/online-shopping-products:latest
-        imagePullPolicy: IfNotPresent
+        image:  flavrotary/online-shopping-product:latest
+        imagePullPolicy: Always
         resources:
           requests:
             cpu: 100m
@@ -32,38 +32,21 @@ spec:
           limits:
             cpu: 100m
             memory: 100Mi
-        livenessProbe:
-          tcpSocket:
-            port: 80
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 5
-          timeoutSeconds: 2
-          successThreshold: 1
-          failureThreshold: 3
-          periodSeconds: 10
         env:
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: myjob
-              key: DB_HOST
+          - name: MONGO_INITDB_ROOT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-creds
+                key: username
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-creds
+                key: password
+          - name: MONGO_INITDB_DATABASE
+            value: shopping_db
         ports:
         - containerPort:  5000
-        volumeMounts:
-        - name: localtime
-          mountPath: /etc/localtime
-      volumes:
-        - name: localtime
-          hostPath:
-            path: /usr/share/zoneinfo/Asia/Tehran
       restartPolicy: Always
 ---
 
@@ -76,7 +59,7 @@ metadata:
 spec:
   selector:
     app: products-deployment
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - protocol: TCP
     port: 5002

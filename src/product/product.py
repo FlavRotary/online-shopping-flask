@@ -1,7 +1,12 @@
 from configparser import ConfigParser
 from os import path
+import os
 from flask import Flask, jsonify
 from flask_pymongo import MongoClient
+from flask_restful import Api
+
+from AddProduct import AddProduct
+from GetProduct import ReturnProduct
 
 app = Flask(__name__)
 
@@ -11,21 +16,19 @@ config.read([
     path.abspath('sample_config.ini')
 ])
 
+username = os.environ['MONGO_INITDB_ROOT_USERNAME']
+password = os.environ['MONGO_INITDB_ROOT_PASSWORD']
+db_name = os.environ['MONGO_INITDB_DATABASE']
+
 default_config = config['DEFAULT']
-app.config.update(default_config)
+app.config['MONGO_URI'] =  'mongodb://' + username + ':' + password + '@mongo/' + db_name
+app.config['JWT_SECRET'] = default_config['JWT_SECRET']
 
-def get_db():
-    client = MongoClient(host='test_mongodb',
-                         port=27017, 
-                         username='root', 
-                         password='pass',
-                        authSource="admin")
-    db = client["products"]
-    return db
+api = Api(app)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello from product!</p>"
+api.add_resource(AddProduct, '/api/products/add_product')
+api.add_resource(ReturnProduct, '/api/products/<string:uuid>')
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)

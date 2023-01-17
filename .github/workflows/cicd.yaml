@@ -2,75 +2,341 @@ name: CI-CD
 on:
   push:
     branches:
-      - 'main'
+      - 'develop'
 
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: cloud-project-frotaru-tprion
+  GKE_ZONE: europe-central2
+  DEPLOYMENT_NAME: online-shopping-flask
+      
 jobs:
-#   build-and-push:
-#     name: Build and push docker images
-#     runs-on: ubuntu-latest
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         include:
-#           - dockerfile: ./src/newsletter/Dockerfile
-#             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-newsletter
-#             name: online-shopping-newsletter
-#           - dockerfile: ./src/product/Dockerfile
-#             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-product
-#             name: online-shopping-product
-#           - dockerfile: ./src/shopping-cart/Dockerfile
-#             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-cart
-#             name: online-shopping-cart
-#           - dockerfile: ./src/user/Dockerfile
-#             image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-user
-#             name: online-shopping-user
-#     steps:
-#       - name: Checkout source code
-#         uses: actions/checkout@v3
-
-#       - name: Set up QEMU
-#         uses: docker/setup-qemu-action@v2
-
-#       - name: Set up Docker Buildx
-#         uses: docker/setup-buildx-action@v2
-
-#       - name: Login to Dockerhub Container Registry
-#         uses: docker/login-action@v2
-#         with:
-#           username: ${{secrets.DOCKERHUB_USERNAME}}
-#           password: ${{secrets.DOCKERHUB_TOKEN}}
-
-#       - name: Extract metadata (tags, labels) for Docker
-#         id: meta
-#         uses: docker/metadata-action@v4
-#         with:
-#           images: ${{ matrix.image }}
-
-#       - name: Build and push Docker Images
-#         uses: docker/build-push-action@v3
-#         with:
-#           context: .
-#           file: ${{ matrix.dockerfile }}
-#           push: true
-#           tags: ${{secrets.DOCKERHUB_USERNAME}}/${{ matrix.name }}:latest
-#           labels: ${{ steps.meta.outputs.labels }}
-
-  fetch-and-deploy:
-    name: Fetch Images and deploy to GKE
+  check-modified-folders:
+    name: Check for modified folders
     runs-on: ubuntu-latest
-    if: ${{ always() }}
-    # needs: [build-and-push]
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-    env:
-      PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-      GKE_CLUSTER: cloud-project-frotaru-tprion
-      GKE_ZONE: europe-central2
-      DEPLOYMENT_NAME: online-shopping-flask
+    outputs:
+      newsletter: ${{steps.evaluate-files.outputs.NEWSLETTER}}
+      product: ${{steps.evaluate-files.outputs.PRODUCT}}
+      shopping-cart: ${{steps.evaluate-files.outputs.CART}}
+      user: ${{steps.evaluate-files.outputs.USER}}
+      mongo: ${{steps.evaluate-files.outputs.MONGO}}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
+
+      - name: Get all changed files and use a comma separator in the output
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          separator: ","
+      
+      - name: Print changed files
+        id: print-changed-files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
+
+      - name: Evaluate changed files
+        id: evaluate-files
+        run: |
+          output=$(echo ${{steps.changed-files.outputs.all_changed_files}} | sed 's/[.]//')
+          echo "$output"
+          if [[ $output == *"src/newsletter"* || $output == *"kube/app/newsletter"* ]]; then
+            echo "NEWSLETTER=true" >> $GITHUB_OUTPUT
+          else
+            echo "NEWSLETTER=false" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$output" == *"src/product"* || "$output" == *"kube/app/product"* ]]; then
+            echo "PRODUCT=true" >> $GITHUB_OUTPUT
+          else
+            echo "PRODUCT=false" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$output" == *"src/shopping-cart"* || "$output" == *"kube/app/shopping-cart"* ]]; then
+            echo "CART=true" >> $GITHUB_OUTPUT
+          else
+            echo "CART=false" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$output" == *"src/user"* || "$output" == *"kube/app/user"* ]]; then
+            echo "USER=true" >> $GITHUB_OUTPUT
+          else
+            echo "USER=false" >> $GITHUB_OUTPUT
+          fi
+          if [[ "$output" == *"kube/mongodb"* ]]; then
+            echo "MONGO=true" >> $GITHUB_OUTPUT
+          else
+            echo "MONGO=false" >> $GITHUB_OUTPUT
+          fi
+
+  push-deploy-newsletter:
+    name: "Push and deploy newsletter to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.newsletter == 'true'
+    env:
+      DOCKERFILE: ./src/newsletter/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-newsletter
+      NAME: online-shopping-newsletter
+      DEPLOYMENT_FILE: ./kube/app/newsletter-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Remove old cronjob
+        run: 'kubectl delete cronjob newsletter --namespace $NAMESPACE'
+
+      - name: Apply new deployment file
+        if: always()
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-product:
+    name: "Push and deploy product to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.product == 'true'
+    env:
+      DOCKERFILE: ./src/product/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-product
+      NAME: online-shopping-product
+      DEPLOYMENT_FILE: ./kube/app/products-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Apply new deployment file
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-shopping-cart:
+    name: "Push and deploy shopping-cart to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.shopping-cart == 'true'
+    env:
+      DOCKERFILE: ./src/shopping-cart/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-cart
+      NAME: online-shopping-cart
+      DEPLOYMENT_FILE: ./kube/app/shopping-cart-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Apply new deployment file
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-user:
+    name: "Push and deploy user to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.user == 'true'
+    env:
+      DOCKERFILE: ./src/user/Dockerfile
+      IMAGE: https://hub.docker.com/repository/docker/flavrotary/online-shopping-user
+      NAME: online-shopping-user
+      DEPLOYMENT_FILE: ./kube/app/users-deployment.yml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Dockerhub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{env.IMAGE}}
+
+      - name: Build and push Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ${{env.DOCKERFILE}}
+          push: true
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/${{env.NAME}}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+      
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+          service_account: ${{secrets.GKE_SA_KEY}}
+
+      - name: Get Google Cloud GKE Creds
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{env.GKE_CLUSTER}}
+          location: ${{env.GKE_ZONE}}
+
+      - name: Apply new deployment file
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+  push-deploy-mongo:
+    name: "Push and deploy mongo to kubernetes cluster"
+    runs-on: ubuntu-latest
+    needs: [check-modified-folders]
+    if: needs.check-modified-folders.outputs.mongo == 'true'
+    env:
+      DEPLOYMENT_FILE: ./kube/mongodb/mongo-deployment.yaml
+      NAMESPACE: cloudcomputing-app
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Login to Dockerhub Container Registry
         uses: docker/login-action@v2
@@ -90,6 +356,103 @@ jobs:
           cluster_name: ${{env.GKE_CLUSTER}}
           location: ${{env.GKE_ZONE}}
 
-      - name: Apply kustomization
-        run: 'kubectl apply -k kube/.'
+      - name: Apply new deployment file
+        run: 'kubectl apply -f $DEPLOYMENT_FILE'
+
+
+
+
+
+
+
+
+  # build-and-push:
+  #   name: Build and push docker images
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - dockerfile: ./src/newsletter/Dockerfile
+  #           image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-newsletter
+  #           name: online-shopping-newsletter
+  #         - dockerfile: ./src/product/Dockerfile
+  #           image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-product
+  #           name: online-shopping-product
+  #         - dockerfile: ./src/shopping-cart/Dockerfile
+  #           image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-cart
+  #           name: online-shopping-cart
+  #         - dockerfile: ./src/user/Dockerfile
+  #           image: https://hub.docker.com/repository/docker/flavrotary/online-shopping-user
+  #           name: online-shopping-user
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v2
+
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v2
+
+  #     - name: Login to Dockerhub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{secrets.DOCKERHUB_USERNAME}}
+  #         password: ${{secrets.DOCKERHUB_TOKEN}}
+
+  #     - name: Extract metadata (tags, labels) for Docker
+  #       id: meta
+  #       uses: docker/metadata-action@v4
+  #       with:
+  #         images: ${{ matrix.image }}
+
+  #     - name: Build and push Docker Images
+  #       uses: docker/build-push-action@v3
+  #       with:
+  #         context: .
+  #         file: ${{ matrix.dockerfile }}
+  #         push: true
+  #         tags: ${{secrets.DOCKERHUB_USERNAME}}/${{ matrix.name }}:latest
+  #         labels: ${{ steps.meta.outputs.labels }}
+
+  # fetch-and-deploy:
+  #   name: Fetch Images and deploy to GKE
+  #   runs-on: ubuntu-latest
+  #   if: ${{ always() }}
+  #   needs: [build-and-push]
+  #   permissions:
+  #     contents: 'read'
+  #     id-token: 'write'
+  #   env:
+  #     PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  #     GKE_CLUSTER: cloud-project-frotaru-tprion
+  #     GKE_ZONE: europe-central2
+  #     DEPLOYMENT_NAME: online-shopping-flask
+  #   steps:
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v3
+
+  #     - name: Login to Dockerhub Container Registry
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{secrets.DOCKERHUB_USERNAME}}
+  #         password: ${{secrets.DOCKERHUB_TOKEN}}
+
+  #     - name: Setup Google Cloud CLI
+  #       uses: google-github-actions/auth@v1
+  #       with:
+  #         workload_identity_provider: ${{secrets.GKE_WORKLOAD_IDENTITY_POOL}}
+  #         service_account: ${{secrets.GKE_SA_KEY}}
+
+  #     - name: Get Google Cloud GKE Creds
+  #       uses: google-github-actions/get-gke-credentials@v1
+  #       with:
+  #         cluster_name: ${{env.GKE_CLUSTER}}
+  #         location: ${{env.GKE_ZONE}}
+
+  #     - name: Remove old 
+
+  #     - name: Apply kustomization
+  #       run: 'kubectl apply -k kube/.'
 
